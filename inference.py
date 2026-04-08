@@ -221,7 +221,7 @@ def log_end(
 # Main
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def run_inference() -> None:
     """
     Run the baseline inference agent through all tasks.
 
@@ -231,17 +231,9 @@ def main() -> None:
         HF_TOKEN     : Authentication token
     """
     # --- Read configuration ---
-    api_base_url = os.environ.get("API_BASE_URL")
-    model_name = os.environ.get("MODEL_NAME")
-    hf_token = os.environ.get("HF_TOKEN", "")
-
-    if not api_base_url:
-        print("ERROR: API_BASE_URL environment variable is not set.", file=sys.stderr)
-        sys.exit(1)
-
-    if not model_name:
-        print("ERROR: MODEL_NAME environment variable is not set.", file=sys.stderr)
-        sys.exit(1)
+    api_base_url = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
+    model_name = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+    hf_token = os.environ.get("HF_TOKEN")
 
     # --- Initialize OpenAI client ---
     client = OpenAI(
@@ -340,6 +332,13 @@ def main() -> None:
     print(f"  Total Time: {elapsed:.1f}s")
     print(f"  All Rewards: {','.join(f'{r:.1f}' for r in all_rewards)}")
     print("=" * 60)
+
+
+def main():
+    try:
+        run_inference()
+    except Exception as e:
+        print(f"[ERROR] inference failed: {e}")
 
 
 if __name__ == "__main__":
