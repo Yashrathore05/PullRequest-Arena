@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PullRequest Arena
 
 **An OpenEnv Environment for AI Code Review Training & Evaluation**
@@ -308,3 +309,17 @@ pullrequest-arena/
 ## License
 
 MIT
+=======
+---
+title: Pullrequest Arena
+emoji: 📉
+colorFrom: red
+colorTo: pink
+sdk: docker
+pinned: false
+license: mit
+short_description: OpenEnv Environment for AI Code Review Training & Evaluation
+---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+>>>>>>> cb8e8e74c95250b25e15cff62f8dd97a2279436d
