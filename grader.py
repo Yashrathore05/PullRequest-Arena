@@ -5,11 +5,11 @@ Evaluates agent review actions against expected solutions.
 Produces scores between 0.0 and 1.0.
 
 Scoring:
-    - Correct action type + relevant keywords in comment  → 1.0
-    - Correct action type + partial keyword match          → 0.7
-    - Correct action type, no keyword match                → 0.5
-    - Partially related action type                        → 0.3
-    - Wrong action type entirely                           → 0.0
+    - Correct action type + relevant keywords in comment  → 0.95
+    - Correct action type + partial keyword match          → 0.75
+    - Correct action type, no keyword match                → 0.65
+    - Partially related action type                        → 0.35
+    - Wrong action type entirely                           → 0.05
 """
 
 # Action types that are considered partially related.
@@ -76,33 +76,31 @@ def grade(action: dict, task: dict) -> float:
     Returns:
         float: Reward score between 0.0 and 1.0
 
-    Scoring breakdown:
-        - action_score (60% weight): Based on action type match
-        - keyword_score (40% weight): Based on comment keyword match
-
-    The scores are combined as:
-        reward = (action_score * 0.6) + (keyword_score * 0.4)
+    Scoring:
+        - Correct action type + relevant keywords in comment  → 0.95
+        - Correct action type + partial keyword match          → 0.75
+        - Correct action type, no keyword match                → 0.65
+        - Partially related action type                        → 0.35
+        - Wrong action type entirely                           → 0.05
     """
     action_type = action.get("type", "").strip().lower()
     comment = action.get("comment", "")
     expected_action = task.get("expected_action", "").strip().lower()
     expected_keywords = task.get("expected_keywords", [])
 
-    # --- Action type scoring ---
+    # --- Action type mapping ---
     if action_type == expected_action:
-        action_score = 1.0
+        # Full correct action
+        keyword_score = _compute_keyword_score(comment, expected_keywords)
+        if keyword_score == 1.0:
+            return 0.95
+        elif keyword_score == 0.5:
+            return 0.75
+        else:
+            return 0.65
     elif action_type in PARTIAL_CREDIT_MAP.get(expected_action, []):
-        action_score = 0.5
+        # Partially related action
+        return 0.35
     else:
-        # Completely wrong action (e.g., approving buggy code)
-        # No keyword credit either — early return 0.0
-        return 0.0
-
-    # --- Keyword scoring ---
-    keyword_score = _compute_keyword_score(comment, expected_keywords)
-
-    # --- Composite reward ---
-    reward = (action_score * 0.6) + (keyword_score * 0.4)
-
-    # Clamp to [0.0, 1.0]
-    return round(min(max(reward, 0.0), 1.0), 2)
+        # Completely wrong action
+        return 0.05
