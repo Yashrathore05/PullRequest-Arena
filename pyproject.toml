@@ -2,7 +2,7 @@
 name = "pullrequest-arena"
 version = "1.0.0"
 description = "OpenEnv environment for AI code review training and evaluation"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "flask",
@@ -11,6 +11,7 @@ dependencies = [
 
 [project.scripts]
 openenv-server = "server.app:main"
+server = "server.app:main"
 
 [build-system]
 requires = ["setuptools"]
