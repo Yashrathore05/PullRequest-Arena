@@ -14,12 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
-COPY env.py .
-COPY grader.py .
-COPY tasks.json .
-COPY inference.py .
-COPY openenv.yaml .
-COPY README.md .
+COPY . .
 
 # HuggingFace Spaces expects port 7860
 EXPOSE 7860
@@ -29,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860/health')" || exit 1
 
 # Start the Flask server
-CMD ["python", "env.py"]
+CMD ["python", "server/app.py"]

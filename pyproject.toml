@@ -4,6 +4,14 @@ version = "1.0.0"
 description = "OpenEnv environment for AI code review training and evaluation"
 requires-python = ">=3.9"
 
+dependencies = [
+    "flask",
+    "openenv-core>=0.2.0"
+]
+
+[project.scripts]
+openenv-server = "server.app:main"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
