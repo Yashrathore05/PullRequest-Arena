@@ -1,0 +1,87 @@
+name: pullrequest-arena
+description: >
+  An OpenEnv-compatible reinforcement learning environment that simulates
+  a real-world GitHub pull request code review workflow. An AI agent acts
+  as a code reviewer, analyzing code diffs, identifying bugs, and taking
+  review actions such as approving, requesting changes, commenting, or
+  suggesting fixes. Rewards are assigned based on the accuracy and quality
+  of the agent's code review decisions.
+version: "1.0.0"
+entrypoint: env.py
+
+observation_schema:
+  type: object
+  required:
+    - pr_title
+    - pr_description
+    - files_changed
+    - code_diff
+    - language
+    - tests_passed
+  properties:
+    pr_title:
+      type: string
+      description: Title of the pull request under review.
+    pr_description:
+      type: string
+      description: Description explaining the purpose and changes in the pull request.
+    files_changed:
+      type: array
+      items:
+        type: string
+      description: List of filenames modified in the pull request.
+    code_diff:
+      type: string
+      description: The code diff that the agent must review for issues.
+    language:
+      type: string
+      description: Programming language of the code in the diff.
+      enum:
+        - python
+        - javascript
+        - typescript
+        - java
+        - go
+        - rust
+    tests_passed:
+      type: boolean
+      description: Whether the existing test suite passes with the proposed changes.
+    repository_context:
+      type: string
+      description: Additional context about the repository and the module being changed.
+
+action_schema:
+  type: object
+  required:
+    - type
+    - comment
+  properties:
+    type:
+      type: string
+      description: The review action the agent decides to take.
+      enum:
+        - approve
+        - request_changes
+        - comment
+        - suggest_fix
+    comment:
+      type: string
+      description: >
+        The agent's review comment explaining the identified issue,
+        the reasoning behind the chosen action, or the suggested fix.
+
+reward_range:
+  min: 0.0
+  max: 1.0
+  description: >
+    Rewards are normalized between 0.0 and 1.0. A score of 1.0 indicates
+    a correct action type with relevant review commentary. A score of 0.0
+    indicates a completely incorrect review action.
+
+tasks:
+  min_count: 3
+  difficulties:
+    - easy
+    - medium
+    - hard
+  source: tasks.json

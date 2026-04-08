@@ -1,0 +1,346 @@
+"""
+inference.py — Baseline Inference Script for PullRequest Arena
+
+Runs an AI agent (via OpenAI-compatible API) through all tasks in the
+environment and logs results in the strict format required by OpenEnv.
+
+Environment Variables:
+    API_BASE_URL  : Base URL for the OpenAI-compatible API endpoint
+    MODEL_NAME    : Model identifier to use for inference
+    HF_TOKEN      : HuggingFace / API token for authentication
+
+Logging Format:
+    [START] task=<task> env=<env> model=<model>
+    [STEP]  step=1 action=... reward=... done=false error=null
+    [END]   success=true steps=3 score=1.00 rewards=0.0,0.5,1.0
+"""
+
+import json
+import os
+import sys
+import time
+
+from openai import OpenAI
+
+from env import PullRequestArenaEnv
+
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+ENV_NAME = "pullrequest-arena"
+VALID_ACTION_TYPES = {"approve", "request_changes", "comment", "suggest_fix"}
+
+# System prompt instructing the LLM to act as a code reviewer.
+SYSTEM_PROMPT = """You are an expert code reviewer. You will be given a pull request with a code diff to review.
+
+Your job is to analyze the code and decide on one of the following actions:
+- "approve": The code is correct and ready to merge.
+- "request_changes": The code has bugs, errors, or security issues that must be fixed.
+- "comment": You want to leave a comment or question about the code.
+- "suggest_fix": You want to suggest a specific code improvement or refactoring.
+
+Respond ONLY with valid JSON in this exact format, no other text:
+{
+  "type": "<action_type>",
+  "comment": "<your detailed review comment explaining the issue and how to fix it>"
+}
+
+Be thorough in your comment. Explain what the problem is and how to fix it."""
+
+
+def build_review_prompt(observation: dict) -> str:
+    """
+    Build the user prompt from a PR observation.
+
+    Args:
+        observation: Dict with pr_title, pr_description, files_changed,
+                     code_diff, language, tests_passed, repository_context.
+
+    Returns:
+        Formatted prompt string for the LLM.
+    """
+    files = ", ".join(observation.get("files_changed", []))
+    tests_status = "passing" if observation.get("tests_passed") else "failing"
+
+    return f"""## Pull Request Review
+
+**Title:** {observation['pr_title']}
+**Description:** {observation['pr_description']}
+**Files Changed:** {files}
+**Language:** {observation['language']}
+**Tests:** {tests_status}
+**Repository Context:** {observation.get('repository_context', 'N/A')}
+
+### Code Diff
+```{observation['language']}
+{observation['code_diff']}
+```
+
+Review this code diff carefully. Identify any bugs, security issues, style problems, or improvements. Respond with your action and comment as JSON."""
+
+
+def parse_llm_response(response_text: str) -> dict:
+    """
+    Parse the LLM response into a structured action dict.
+
+    Attempts to extract JSON from the response. Falls back to
+    a heuristic parser if JSON parsing fails.
+
+    Args:
+        response_text: Raw text response from the LLM.
+
+    Returns:
+        Action dict with "type" and "comment" keys.
+    """
+    text = response_text.strip()
+
+    # Try direct JSON parse
+    try:
+        action = json.loads(text)
+        if isinstance(action, dict) and "type" in action and "comment" in action:
+            action["type"] = action["type"].strip().lower()
+            if action["type"] in VALID_ACTION_TYPES:
+                return action
+    except json.JSONDecodeError:
+        pass
+
+    # Try extracting JSON from markdown code block
+    if "```" in text:
+        for block in text.split("```"):
+            block = block.strip()
+            # Remove optional language identifier (e.g., "json")
+            if block.startswith("json"):
+                block = block[4:].strip()
+            try:
+                action = json.loads(block)
+                if isinstance(action, dict) and "type" in action:
+                    action["type"] = action["type"].strip().lower()
+                    if action["type"] in VALID_ACTION_TYPES:
+                        action.setdefault("comment", "")
+                        return action
+            except (json.JSONDecodeError, ValueError):
+                continue
+
+    # Try finding JSON object in the text with braces
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start != -1 and end > start:
+        try:
+            action = json.loads(text[start:end])
+            if isinstance(action, dict) and "type" in action:
+                action["type"] = action["type"].strip().lower()
+                if action["type"] in VALID_ACTION_TYPES:
+                    action.setdefault("comment", "")
+                    return action
+        except json.JSONDecodeError:
+            pass
+
+    # Heuristic fallback: detect action type from text
+    text_lower = text.lower()
+    detected_type = "comment"  # default
+    for action_type in ["request_changes", "suggest_fix", "approve", "comment"]:
+        if action_type in text_lower or action_type.replace("_", " ") in text_lower:
+            detected_type = action_type
+            break
+
+    return {"type": detected_type, "comment": text}
+
+
+def call_llm(client: OpenAI, model: str, observation: dict) -> dict:
+    """
+    Call the LLM to review a pull request.
+
+    Args:
+        client: OpenAI client instance.
+        model: Model identifier.
+        observation: PR observation dict.
+
+    Returns:
+        Parsed action dict with "type" and "comment".
+    """
+    prompt = build_review_prompt(observation)
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.0,  # Deterministic for reproducibility
+        max_tokens=512,
+    )
+
+    response_text = response.choices[0].message.content or ""
+    return parse_llm_response(response_text)
+
+
+# ---------------------------------------------------------------------------
+# Logging helpers (strict format)
+# ---------------------------------------------------------------------------
+
+def log_start(task_id: int, env_name: str, model: str) -> None:
+    """Log the start of a task evaluation."""
+    print(f"[START] task={task_id} env={env_name} model={model}")
+
+
+def log_step(
+    step: int,
+    action: dict,
+    reward: float,
+    done: bool,
+    error: str | None = None,
+) -> None:
+    """Log a single step in strict format."""
+    action_str = json.dumps(action, separators=(",", ":"))
+    done_str = str(done).lower()
+    error_str = error if error else "null"
+    print(
+        f"[STEP] step={step} action={action_str} "
+        f"reward={reward} done={done_str} error={error_str}"
+    )
+
+
+def log_end(
+    success: bool,
+    steps: int,
+    score: float,
+    rewards: list[float],
+) -> None:
+    """Log the end of a task evaluation."""
+    success_str = str(success).lower()
+    rewards_str = ",".join(f"{r:.1f}" for r in rewards)
+    print(
+        f"[END] success={success_str} steps={steps} "
+        f"score={score:.2f} rewards={rewards_str}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    """
+    Run the baseline inference agent through all tasks.
+
+    Reads configuration from environment variables:
+        API_BASE_URL : OpenAI-compatible API base URL
+        MODEL_NAME   : Model identifier
+        HF_TOKEN     : Authentication token
+    """
+    # --- Read configuration ---
+    api_base_url = os.environ.get("API_BASE_URL")
+    model_name = os.environ.get("MODEL_NAME")
+    hf_token = os.environ.get("HF_TOKEN", "")
+
+    if not api_base_url:
+        print("ERROR: API_BASE_URL environment variable is not set.", file=sys.stderr)
+        sys.exit(1)
+
+    if not model_name:
+        print("ERROR: MODEL_NAME environment variable is not set.", file=sys.stderr)
+        sys.exit(1)
+
+    # --- Initialize OpenAI client ---
+    client = OpenAI(
+        base_url=api_base_url,
+        api_key=hf_token if hf_token else "no-key",
+    )
+
+    # --- Initialize environment ---
+    env = PullRequestArenaEnv()
+    total_tasks = env.num_tasks
+
+    print(f"PullRequest Arena — Baseline Inference")
+    print(f"Model: {model_name}")
+    print(f"API:   {api_base_url}")
+    print(f"Tasks: {total_tasks}")
+    print("=" * 60)
+
+    # --- Run agent through all tasks ---
+    all_rewards: list[float] = []
+    all_success: list[bool] = []
+    start_time = time.time()
+
+    for task_idx in range(total_tasks):
+        observation = env.reset(task_index=task_idx)
+        task_id = env.state()["current_task_id"]
+
+        log_start(task_id=task_id, env_name=ENV_NAME, model=model_name)
+
+        step_num = 0
+        episode_rewards: list[float] = []
+        success = False
+        error_msg = None
+
+        try:
+            # Build prompt and call LLM
+            action = call_llm(client, model_name, observation)
+            step_num += 1
+
+            # Submit action to environment
+            obs, reward, done, info = env.step(action)
+            episode_rewards.append(reward)
+
+            log_step(
+                step=step_num,
+                action=action,
+                reward=reward,
+                done=done,
+                error=None,
+            )
+
+            success = True
+
+        except Exception as e:
+            step_num += 1
+            error_msg = str(e)
+            episode_rewards.append(0.0)
+            log_step(
+                step=step_num,
+                action={"type": "error", "comment": error_msg},
+                reward=0.0,
+                done=True,
+                error=error_msg,
+            )
+            success = False
+
+        # Episode score is the average reward
+        episode_score = (
+            sum(episode_rewards) / len(episode_rewards)
+            if episode_rewards
+            else 0.0
+        )
+
+        log_end(
+            success=success,
+            steps=step_num,
+            score=episode_score,
+            rewards=episode_rewards,
+        )
+
+        all_rewards.extend(episode_rewards)
+        all_success.append(success)
+
+        print()  # Blank line between tasks
+
+    # --- Aggregate results ---
+    elapsed = time.time() - start_time
+    total_score = (
+        sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
+    )
+    tasks_passed = sum(1 for s in all_success if s)
+
+    print("=" * 60)
+    print("SUMMARY")
+    print(f"  Tasks:      {tasks_passed}/{total_tasks} completed")
+    print(f"  Avg Score:  {total_score:.2f}")
+    print(f"  Total Time: {elapsed:.1f}s")
+    print(f"  All Rewards: {','.join(f'{r:.1f}' for r in all_rewards)}")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()
