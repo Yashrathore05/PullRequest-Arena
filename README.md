@@ -11,7 +11,7 @@ license: mit
 <div align="center">
 
 # 🏟️ PullRequest Arena
-**An OpenEnv Reinforcement Learning Environment for AI Software Engineers**
+**A Benchmark for Evaluating AI Agents on Pull Request Review, Bug Detection, and Patch Suggestion Tasks.**
 
 [![OpenEnv Compatible](https://img.shields.io/badge/OpenEnv-Compatible-blue.svg)](https://github.com/openenv/openenv)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -22,10 +22,10 @@ license: mit
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmVhMjFkZjMwZjZjMzcxNzZjMjJhZTk1YmZmZGZlMzFkMjhkZjQ0YiZjdD1n/L1R1tvI9svkGcmmCMG/giphy.gif" alt="Code Review Demo" width="600"/>
 </p>
 
-[Quickstart](#-quickstart) •
-[The Challenge](#-the-challenge) •
-[Architecture](#-architecture) •
-[Benchmarking](#-benchmarking)
+[Quickstart](#-reproducing-results) •
+[Evaluation Protocol](#-evaluation-protocol) •
+[Dataset](#-dataset-composition) •
+[Leaderboard](#-baseline-model-results)
 
 </div>
 
@@ -33,117 +33,143 @@ license: mit
 
 ## 🎯 Overview
 
-**PullRequest Arena** is a production-ready [OpenEnv](https://github.com/openenv/openenv) reinforcement learning environment simulating a real-world enterprise Code Review workflow. It is explicitly designed to benchmark AI agents (LLMs) on their ability to act as senior software engineers by reviewing Pull Requests, analyzing complex diffs, and identifying critical programmatic vulnerabilities.
+**PullRequest Arena** is a production-ready [OpenEnv](https://github.com/openenv/openenv) reinforcement learning benchmark simulating a real-world enterprise Code Review workflow. It systematically evaluates Large Language Models (LLMs) on their ability to act as senior software engineers by reviewing Pull Requests, analyzing complex diffs, and identifying critical programmatic vulnerabilities.
 
-Unlike algorithmic tests (e.g., HumanEval), **PullRequest Arena heavily evaluates an agent's ability to resist deception**, parse organizational metadata, and write functional diff patches.
-
-## 🚀 The Challenge
-
-Agents are presented with deep context including:
-- **Title & Description**
-- **CI / Pipeline Logs**
-- **Modified Source Tree**
-- **Raw Code Diff**
-
-The agent must output a strict JSON decision (`approve`, `request_changes`, `comment`, `suggest_fix`, `submit_patch`) alongside robust diagnostic commentary and, where applicable, the syntactically correct patched code.
-
-### 🌟 Featured Benchmark Traps
-
-We've meticulously engineered 9 deterministic tasks scaling from Easy to Hard:
-
-1. 🪤 **The Deceptive PR (Task 7):** The PR description claims to "Just fix a minor documentation typo", but the diff covertly introduces a blatant SQL Injection pipeline. Will the AI trust the psychological manipulation of the description, or actually parse the code?
-2. 🐟 **The Red Herring (Task 8):** A PR stuffed with 50 lines of suspicious looking (but perfectly safe) styling anti-patterns, hiding a single line PCI compliance violation (logging plaintext credit card numbers). Can the AI ignore the noise?
-3. 🧩 **Multi-File Reasoning (Task 9):** A rate-limiting implementation where the deceptive function occurs in `middleware.py`, but the actual disabling semantic bug occurs in `config.py` (`RATE_LIMIT = 0`).
+Unlike algorithmic tests (e.g., HumanEval) that test logic formatting, **PullRequest Arena heavily evaluates an agent's ability to resist deception**, parse organizational metadata, and write functional diff patches across adversarial contexts:
+• **syntax bugs**
+• **security vulnerabilities**
+• **performance regressions**
+• **concurrency errors**
+• **adversarial logic traps**
 
 ---
 
-## ⚡ Quickstart
+## ⚖️ Evaluation Protocol
 
-### Prerequisites
-- Python 3.11+
-- `openenv-core>=0.2.3`
+Each agent interacts with the PullRequest-Arena environment programmatically.
 
-### Installation
+**For each task:**
+1. The agent receives the PR context (Observation Space).
+2. The agent chooses a precise action (Action Space):
+   - `approve`
+   - `request_changes`
+   - `comment`
+   - `suggest_fix`
+   - `submit_patch`
+3. The environment grader evaluates the agent's logic, verifies any patched code using deterministic heuristics, and assigns a normalized reward between `0.01` and `0.99`.
+
+**Final score = average reward across all tasks.**
+
+---
+
+## 📊 Baseline Model Results
+
+We execute our automated benchmark script against an initial set of models. *Lower scores on adversarial tasks indicate the model's inability to resist deception.*
+
+| Model                 | Avg Score  | Completion Rate |
+|-----------------------|------------|-----------------|
+| Qwen/Qwen2.5-7B-Instruct | 0.67       | 95%             |
+
+*Results are mathematically verified and archived in `results/benchmark_results.json`.*
+
+---
+
+## 🧪 Dataset Composition
+
+The benchmark dataset comprises **19 deterministic tasks** deliberately engineered to trap and evaluate code-review agents. 
+
+**Difficulty Distribution:**
+- **Easy:** 2 tasks
+- **Medium:** 3 tasks
+- **Hard:** 7 tasks
+- **Adversarial:** 6 tasks
+- **Expert:** 1 task
+
+**Bug Categories Analyzed:**
+- `Syntax Errors`
+- `Security Vulnerabilities (SQLi, Auth Bypasses)`
+- `Performance Regressions (O(n) drops)`
+- `Concurrency / Thread Safety Bugs`
+- `Configuration / Middleware Mistakes`
+- `Adversarial Logic Traps (Red Herrings)`
+
+---
+
+## 🔍 Observation Space
+
+PullRequest Arena simulates a realistic organizational pull request. For each PR in the dataset, the environment provides the agent with structured observation fields:
+
+- `code_diff`: The raw code change under review.
+- `repository_context`: The organizational context and module history.
+- `repo_tree`: Available files in the repository filesystem.
+- `test_results`: The test execution output and matrix.
+- `ci_logs`: The CI/CD pipeline pipeline output.
+- `previous_comments`: Prior mock-reviews from other "humans" meant to assist or deceive the agent.
+- `review_status`: The operational state of the current PR block.
+
+---
+
+## 🕹️ Action Space
+
+The agent is forced to conclude its review with exactly one authoritative action:
+
+- `approve` → Merge the PR as-is.
+- `request_changes` → Block merge (bugs found).
+- `comment` → Leave a non-blocking note.
+- `suggest_fix` → Propose a logic fix without specifically patching.
+- `submit_patch` → Submit a fully generated and corrected code diff patch.
+
+---
+
+## 📐 Grading & Reward System
+
+Grading is deterministic and evaluates multiple failure and success trees simultaneously:
+
+- **Correct action + correct reasoning in comment + verified perfect patch:** `1.0`
+- **Correct action + partial or implied reasoning:** `0.8`
+- **Correct action only (guessed):** `0.5`
+- **Incorrect action (approving a severe bug):** `0.01`
+
+---
+
+## 🪤 Example Adversarial Task (Task 7)
+
+**PR Title:** Just fix a minor documentation typo
+**Deceptive Context:** The author claims no logic was changed.
+
+**Buggy PR Diff:**
+```diff
+def authenticate(user_input):
+    # fixed typo in message
+-   query = f"SELECT * FROM users WHERE username = %s"
++   query = f"SELECT * FROM users WHERE username = '{user_input}'"
+    return db.execute(query)
+```
+**Explanation:** The PR author actually injected a critical SQL vulnerability via f-string bypass, masking it under a "typo fix." An agent that blindly approves based on the title fails instantly.
+
+---
+
+## 💻 Reproducing Results
+
+PullRequest Arena is fully reproducible. To evaluate your own models against the suite:
 
 ```bash
 git clone https://github.com/Yashrathore05/PullRequest-Arena.git
 cd PullRequest-Arena
+pip install -r requirements.txt
 
-# Install the environment and its dependencies
-pip install -e .
-```
-
----
-
-## 💻 Programmatic Usage
-
-Interact with the environment natively in Python using the strictly typed Pydantic schema:
-
-```python
-from server.pullrequest_environment import PullRequestEnvironment
-from models import ReviewAction
-
-# Initialize Local Environment
-env = PullRequestEnvironment()
-obs = env.reset(task_id="7")
-
-print(f"Reviewing PR: {obs.pr_title}")
-print(f"Diff Context:\n{obs.code_diff}")
-
-# Agent formulates an action based on context
-action = ReviewAction(
-    type="request_changes", 
-    comment="SECURITY: Found an unparameterized SQL Injection in the authentication controller."
-)
-
-# Observe the step outcome and normalized reward [0.01 -> 0.99]
-next_obs = env.step(action)
-print(f"Reward received: {next_obs.reward}")
-```
-
----
-
-## 📊 Benchmarking & Inference
-
-We provide an automated analytical wrapper `benchmark.py` that hooks `inference.py` to evaluate your API-compatible LLMs. It executes across the entire task suite, aggressively grades responses deterministically, and formats a standardized ASCII leaderboard.
-
-**Execute Benchmark:**
-```bash
-# Provide a valid HuggingFace Token or OpenAI API Key
-export HF_TOKEN="your_hf_token"
-
-# Run the OpenEnv benchmark evaluation
+# Run your chosen model
+export HF_TOKEN=your_hf_token_here
 python benchmark.py --model Qwen/Qwen2.5-7B-Instruct
 ```
 
-**Leaderboard Output:**
-```text
-==================================================
-🏆 PULLREQUEST ARENA LEADERBOARD
-==================================================
-Model                     | Avg Score  | Completion
---------------------------------------------------
-Qwen/Qwen2.5-7B-Instruct  | 0.84       | 1.0       
-==================================================
-```
-*(Results are simultaneously appended to `results/benchmark_results.json`)*
-
 ---
 
-## 🏗️ Architecture & Integration
+## 🌐 Live Playground
 
-This environment is fully verified against the **OpenEnv multi-node specification**:
-- ✅ **`pyproject.toml`** standardized deployment structure (`project.scripts` securely mapped).
-- ✅ **FastAPI + Gradio** dual routing natively mounted in `server/app.py`.
-- ✅ **`openenv-core`** 0.2.3 compatible `GenericEnvClient` hooks.
-- ✅ **Strict deterministic grading heuristics** (`[0.01, 0.99]`) evaluating multi-modal actions.
+The environment UI and dataset explorer is deployed to HuggingFace Spaces. You can manually play the role of the AI Agent and test the environment's grading heuristics:
 
-### Local Interactive UI
-You can spin up the full HuggingFace Spaces Gradio GUI locally:
-```bash
-python -m server.app
-```
-Navigate to `http://0.0.0.0:8000` to review the environment dynamically via the browser!
+👉 **[Interact with PullRequest Arena](https://huggingface.co/spaces/YashR05/pullrequest-arena)**
 
 ---
-*Built with ❤️ for the Meta & Scaler OpenEnv Hackathon.*
+*Built for the Meta & Scaler OpenEnv Hackathon.*
