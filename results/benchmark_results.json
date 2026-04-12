@@ -1,7 +1,7 @@
 [
     {
         "model": "Qwen/Qwen2.5-7B-Instruct",
-        "timestamp": "2026-04-12T20:20:49.147487",
+        "timestamp": "2026-04-12T20:23:52.460283",
         "average_reward": 0.67,
         "bug_detection_rate": 0.74,
         "patch_success_rate": 0.0,
