@@ -1,10 +1,10 @@
-from openenv.core.env_client import EnvClient
+from openenv.core.generic_client import GenericEnvClient
 
 try:
     from .models import ReviewAction, PRObservation
 except ImportError:
     from models import ReviewAction, PRObservation
 
-class PullRequestEnv(EnvClient):
+class PullRequestEnv(GenericEnvClient):
     action_type = ReviewAction
     observation_type = PRObservation

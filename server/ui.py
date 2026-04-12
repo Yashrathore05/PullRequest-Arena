@@ -63,20 +63,11 @@ def create_ui():
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"]
     )
 
-    custom_css = """
-    .hero-box { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); border-radius: 12px; padding: 2rem; color: white; margin-bottom: 1rem; }
-    .stat-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; text-align: center; }
-    .badge-easy   { background: #d1fae5; color: #065f46; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; }
-    .badge-hard   { background: #fee2e2; color: #991b1b; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-weight: 600; }
-    """
-
-    with gr.Blocks(theme=theme, title="PullRequest Arena — AI Code Review Benchmark", css=custom_css) as app:
+    with gr.Blocks(theme=theme, title="PullRequest Arena — AI Code Review Benchmark") as app:
         env_state = gr.State()
 
         # ── Hero Section ────────────────────────────────────────────────────
         gr.Markdown("""
-<div style="background: linear-gradient(135deg, #1e1b4b, #4338ca); border-radius: 12px; padding: 2rem 2.5rem; color: white; margin-bottom: 1.5rem;">
-
 # 🏟️ PullRequest Arena
 ### An OpenEnv Benchmark for AI Code Review Agents
 
@@ -85,8 +76,6 @@ PullRequest Arena evaluates Large Language Models on their ability to act as **S
 &nbsp;&nbsp;[![HuggingFace Space](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Space-green?style=flat-square)](https://huggingface.co/spaces/YashR05/pullrequest-arena)&nbsp;&nbsp;
 [![GitHub](https://img.shields.io/badge/GitHub-PullRequest--Arena-black?style=flat-square&logo=github)](https://github.com/Yashrathore05/PullRequest-Arena)&nbsp;&nbsp;
 [![OpenEnv](https://img.shields.io/badge/OpenEnv-Compatible-blue?style=flat-square)](https://github.com/openenv/openenv)
-
-</div>
         """)
 
         # ── Stats Row ───────────────────────────────────────────────────────
