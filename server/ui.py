@@ -65,7 +65,7 @@ def create_ui():
                     value="request_changes"
                 )
                 action_comment = gr.Textbox(label="Review Comment (Provide explicit reasoning)", lines=4, placeholder="I noticed that logging the card details directly here introduces a severe PCI-DSS violation...")
-                action_patch = gr.Code(label="Proposed Patch (Required for submit_patch)", language="diff")
+                action_patch = gr.Code(label="Proposed Patch (Required for submit_patch)", language="python")
                 submit_btn = gr.Button("Submit Evaluation", variant="primary")
                 
                 gr.Markdown("---")
