@@ -180,7 +180,7 @@ def call_llm(client: OpenAI, model: str, observation: dict) -> dict:
 # Logging helpers (strict format)
 # ---------------------------------------------------------------------------
 
-def log_start(task_id: int, env_name: str, model: str) -> None:
+def log_start(task_id: str, env_name: str, model: str) -> None:
     """Log the start of a task evaluation."""
     print(f"[START] task={task_id} env={env_name} model={model}")
 
@@ -193,27 +193,26 @@ def log_step(
     error: str | None = None,
 ) -> None:
     """Log a single step in strict format."""
-    action_str = json.dumps(action, separators=(",", ":"))
+    action_str = json.dumps(action, separators=(",", ":")).replace("\n", "").replace("\r", "")
     done_str = str(done).lower()
     error_str = error if error else "null"
     print(
         f"[STEP] step={step} action={action_str} "
-        f"reward={reward} done={done_str} error={error_str}"
+        f"reward={reward:.2f} done={done_str} error={error_str}"
     )
 
 
 def log_end(
     success: bool,
     steps: int,
-    score: float,
     rewards: list[float],
 ) -> None:
     """Log the end of a task evaluation."""
     success_str = str(success).lower()
-    rewards_str = ",".join(f"{r:.1f}" for r in rewards)
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
         f"[END] success={success_str} steps={steps} "
-        f"score={score:.2f} rewards={rewards_str}"
+        f"rewards={rewards_str}"
     )
 
 
@@ -235,10 +234,13 @@ def run_inference() -> None:
     model_name = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
     hf_token = os.environ.get("HF_TOKEN")
 
+    if hf_token is None:
+        raise ValueError("HF_TOKEN environment variable is required")
+
     # --- Initialize OpenAI client ---
     client = OpenAI(
         base_url=api_base_url,
-        api_key=hf_token if hf_token else "no-key",
+        api_key=hf_token
     )
 
     # --- Initialize environment ---
@@ -301,17 +303,9 @@ def run_inference() -> None:
             )
             success = False
 
-        # Episode score is the average reward
-        episode_score = (
-            sum(episode_rewards) / len(episode_rewards)
-            if episode_rewards
-            else 0.0
-        )
-
         log_end(
             success=success,
             steps=step_num,
-            score=episode_score,
             rewards=episode_rewards,
         )
 
