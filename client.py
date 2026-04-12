@@ -1,4 +1,4 @@
-from openenv.core.env_server.client import EnvClient
+from openenv.core.env_client import EnvClient
 
 try:
     from .models import ReviewAction, PRObservation
