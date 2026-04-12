@@ -75,13 +75,16 @@ def run_benchmark(model_name: str):
     tasks = max(1, metrics["tasks"])
     avg_reward = sum(metrics["total_rewards"]) / len(metrics["total_rewards"]) if metrics["total_rewards"] else 0.0
     
+    # Clamp helper: validator rejects exactly 0.0 and 1.0
+    def _clamp(v): return round(max(0.01, min(0.99, v)), 2)
+
     return {
         "model": model_name,
         "timestamp": datetime.now().isoformat(),
-        "average_reward": round(avg_reward, 2),
-        "bug_detection_rate": round(metrics["bug_detections"] / tasks, 2),
-        "patch_success_rate": round(metrics["patch_successes"] / max(1, metrics["patch_attempts"]), 2),
-        "task_completion_rate": round(metrics["successes"] / tasks, 2)
+        "average_reward": _clamp(avg_reward),
+        "bug_detection_rate": _clamp(metrics["bug_detections"] / tasks),
+        "patch_success_rate": _clamp(metrics["patch_successes"] / max(1, metrics["patch_attempts"])),
+        "task_completion_rate": _clamp(metrics["successes"] / tasks)
     }
 
 def print_leaderboard(results):
