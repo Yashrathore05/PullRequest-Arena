@@ -22,7 +22,8 @@ import time
 
 from openai import OpenAI
 
-from client import PullRequestEnv
+from server.pullrequest_environment import PullRequestEnvironment
+from models import ReviewAction
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +247,7 @@ def run_inference() -> None:
     )
 
     # --- Initialize environment ---
-    env = PullRequestEnv()
+    env = PullRequestEnvironment()
     task_ids = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
     total_tasks = len(task_ids)
 
@@ -279,7 +280,11 @@ def run_inference() -> None:
             step_num += 1
 
             # Submit action to environment
-            obs, reward, done, info = env.step(action)
+            action_obj = ReviewAction(**action)
+            obs_obj = env.step(action_obj)
+            
+            reward = obs_obj.reward or 0.0
+            done = obs_obj.done or False
             episode_rewards.append(reward)
 
             log_step(
