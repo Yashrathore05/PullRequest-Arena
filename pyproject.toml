@@ -19,4 +19,4 @@ build-backend = "hatchling.build"
 packages = ["server", "client.py", "models.py", "__init__.py"]
 
 [project.scripts]
-openenv-server = "server.app:main"
+server = "server.app:main"
