@@ -19,7 +19,8 @@
       "assignment",
       "syntax",
       "operator"
-    ]
+    ],
+    "expected_patch": "- if password = user.password:\n+ if password == user.password:"
   },
   {
     "id": "2",

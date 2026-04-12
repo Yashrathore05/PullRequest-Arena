@@ -40,11 +40,13 @@ Your job is to analyze the code and decide on one of the following actions:
 - "request_changes": The code has bugs, errors, or security issues that must be fixed.
 - "comment": You want to leave a comment or question about the code.
 - "suggest_fix": You want to suggest a specific code improvement or refactoring.
+- "submit_patch": You want to exactly submit a code patch solving the issue.
 
 Respond ONLY with valid JSON in this exact format, no other text:
 {
   "type": "<action_type>",
-  "comment": "<your detailed review comment explaining the issue and how to fix it>"
+  "comment": "<your detailed review comment explaining the issue and how to fix it>",
+  "patch": "<the diff format fix if type is submit_patch, otherwise empty string>"
 }
 
 Be thorough in your comment. Explain what the problem is and how to fix it."""
