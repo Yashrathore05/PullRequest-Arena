@@ -62,7 +62,7 @@ def run_benchmark(model_name: str):
     env = os.environ.copy()
     env["MODEL_NAME"] = model_name
     
-    result = subprocess.run(["python", "inference.py"], env=env, capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "inference.py"], env=env, capture_output=True, text=True)
     
     if result.returncode != 0:
         print("[ERROR] Inference failed:")
