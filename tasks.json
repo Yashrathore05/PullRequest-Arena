@@ -12,6 +12,19 @@
     "tests_passed": false,
     "ci_logs": "FAILED: SyntaxError: invalid syntax (auth.py, line 2)",
     "repository_context": "Flask web application with user authentication module. The auth.py file handles login, logout, and session management.",
+    "test_results": {
+      "tests_failed": ["test_auth_login"],
+      "tests_passed": ["test_hash_format"]
+    },
+    "repo_tree": [
+      "auth.py",
+      "test_auth.py",
+      "utils/hash.py"
+    ],
+    "previous_comments": [
+      "Wait, didn't we just update hash logic here? Double check security."
+    ],
+    "review_status": "pending_security_audit",
     "expected_action": "request_changes",
     "keywords": [
       "==",
