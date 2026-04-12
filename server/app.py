@@ -27,7 +27,7 @@ async def health():
 
 # Render production UI overlay
 ui = create_ui()
-app = gr.mount_gradio_app(env_app, ui, path="/ui")
+app = gr.mount_gradio_app(env_app, ui, path="/")
 
 def main():
     import uvicorn
