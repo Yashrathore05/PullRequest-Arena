@@ -22,8 +22,43 @@ import time
 
 from openai import OpenAI
 
-from server.pullrequest_environment import PullRequestEnvironment
 from models import ReviewAction
+
+class UnifiedEnv:
+    def __init__(self):
+        self.env_url = os.environ.get("OPENENV_BASE_URL", "")
+        self.is_remote = bool(self.env_url)
+        
+        if self.is_remote:
+            from client import PullRequestEnv
+            self.client = PullRequestEnv(base_url=self.env_url).sync()
+            self.client.__enter__()
+        else:
+            from server.pullrequest_environment import PullRequestEnvironment
+            self.client = PullRequestEnvironment()
+
+    def reset(self, task_id):
+        if self.is_remote:
+            res = self.client.reset(task_id=task_id)
+            return res.observation
+        else:
+            return self.client.reset(task_id=task_id)
+
+    def step(self, action_dict):
+        action_obj = ReviewAction(**action_dict)
+        if self.is_remote:
+            res = self.client.step(action_obj)
+            return res.observation, res.reward or 0.0, res.done or False
+        else:
+            obs = self.client.step(action_obj)
+            return obs, obs.reward or 0.0, obs.done or False
+            
+    def close(self):
+        if self.is_remote:
+            try:
+                self.client.__exit__(None, None, None)
+            except Exception:
+                pass
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +282,7 @@ def run_inference() -> None:
     )
 
     # --- Initialize environment ---
-    env = PullRequestEnvironment()
+    env = UnifiedEnv()
     task_ids = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
     total_tasks = len(task_ids)
 
@@ -280,11 +315,7 @@ def run_inference() -> None:
             step_num += 1
 
             # Submit action to environment
-            action_obj = ReviewAction(**action)
-            obs_obj = env.step(action_obj)
-            
-            reward = obs_obj.reward or 0.0
-            done = obs_obj.done or False
+            obs_obj, reward, done = env.step(action)
             episode_rewards.append(reward)
 
             log_step(
@@ -320,6 +351,8 @@ def run_inference() -> None:
         all_success.append(success)
 
         print()  # Blank line between tasks
+
+    env.close()
 
     # --- Aggregate results ---
     elapsed = time.time() - start_time
