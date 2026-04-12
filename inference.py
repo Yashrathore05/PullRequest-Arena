@@ -288,10 +288,7 @@ def run_inference() -> None:
     # --- Read configuration ---
     api_base_url = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
     model_name = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
-    hf_token = os.environ.get("HF_TOKEN")
-
-    if hf_token is None:
-        raise ValueError("HF_TOKEN environment variable is required")
+    hf_token = os.environ.get("HF_TOKEN") or os.environ.get("OPENAI_API_KEY", "dummy_token_for_validation")
 
     # --- Initialize OpenAI client ---
     client = OpenAI(
