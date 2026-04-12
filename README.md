@@ -4,66 +4,146 @@ emoji: 🏟️
 colorFrom: gray
 colorTo: purple
 sdk: docker
-pinned: false
+pinned: true
+license: mit
 ---
-# 🏟️ PullRequest Arena
 
-**PullRequest Arena** is an [OpenEnv](https://github.com/openenv/openenv) reinforcement learning environment that simulates a real-world GitHub code review flow. It is built to benchmark AI agents on their ability to act as senior software engineers by reviewing Pull Requests, analyzing complex diffs, and identifying critical programmatic vulnerabilities.
+<div align="center">
+
+# 🏟️ PullRequest Arena
+**An OpenEnv Reinforcement Learning Environment for AI Software Engineers**
+
+[![OpenEnv Compatible](https://img.shields.io/badge/OpenEnv-Compatible-blue.svg)](https://github.com/openenv/openenv)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![HuggingFace Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Deployed-green)](https://huggingface.co/spaces/YashR05/pullrequest-arena)
+
+<p align="center">
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMmVhMjFkZjMwZjZjMzcxNzZjMjJhZTk1YmZmZGZlMzFkMjhkZjQ0YiZjdD1n/L1R1tvI9svkGcmmCMG/giphy.gif" alt="Code Review Demo" width="600"/>
+</p>
+
+[Quickstart](#-quickstart) •
+[The Challenge](#-the-challenge) •
+[Architecture](#-architecture) •
+[Benchmarking](#-benchmarking)
+
+</div>
+
+---
+
+## 🎯 Overview
+
+**PullRequest Arena** is a production-ready [OpenEnv](https://github.com/openenv/openenv) reinforcement learning environment simulating a real-world enterprise Code Review workflow. It is explicitly designed to benchmark AI agents (LLMs) on their ability to act as senior software engineers by reviewing Pull Requests, analyzing complex diffs, and identifying critical programmatic vulnerabilities.
+
+Unlike algorithmic tests (e.g., HumanEval), **PullRequest Arena heavily evaluates an agent's ability to resist deception**, parse organizational metadata, and write functional diff patches.
 
 ## 🚀 The Challenge
-Agents are presented with Pull Request metadata (Title, Description, CI Logs, Changed Files) and the exact Code Diff. The agent must return a strict decision (`approve`, `request_changes`, `comment`, `suggest_fix`) along with an explanatory comment identifying the bug.
 
-Unlike simple algorithmic tests, **PullRequest Arena heavily tests an agent's ability to resist deception**.
+Agents are presented with deep context including:
+- **Title & Description**
+- **CI / Pipeline Logs**
+- **Modified Source Tree**
+- **Raw Code Diff**
 
-### 🌟 Featured Tasks (The Traps)
-We've engineered 9 distinct tasks mapping from Easy to Hard. Features include:
-1. **The Deceptive PR (Task 7):** The PR description claims to "Just fix a minor typo", but the actual diff introduces a blatant SQL Injection. Will the AI trust the description, or actually read the code?
-2. **The Red Herring (Task 8):** A PR filled with multiple suspicious-looking (but perfectly safe) styling anti-patterns alongside a single critical PCI compliance violation (logging full credit card numbers). Can the AI ignore the distractions?
-3. **Multi-File Reasoning (Task 9):** A rate-limiting update where the deceptive code occurs in `middleware.py`, but the actual disabling bug occurs in `config.py` (`RATE_LIMIT = 0`).
+The agent must output a strict JSON decision (`approve`, `request_changes`, `comment`, `suggest_fix`, `submit_patch`) alongside robust diagnostic commentary and, where applicable, the syntactically correct patched code.
 
-## 🛠️ Usage & Installation
+### 🌟 Featured Benchmark Traps
 
-**Prerequisites:** Python 3.11+
+We've meticulously engineered 9 deterministic tasks scaling from Easy to Hard:
+
+1. 🪤 **The Deceptive PR (Task 7):** The PR description claims to "Just fix a minor documentation typo", but the diff covertly introduces a blatant SQL Injection pipeline. Will the AI trust the psychological manipulation of the description, or actually parse the code?
+2. 🐟 **The Red Herring (Task 8):** A PR stuffed with 50 lines of suspicious looking (but perfectly safe) styling anti-patterns, hiding a single line PCI compliance violation (logging plaintext credit card numbers). Can the AI ignore the noise?
+3. 🧩 **Multi-File Reasoning (Task 9):** A rate-limiting implementation where the deceptive function occurs in `middleware.py`, but the actual disabling semantic bug occurs in `config.py` (`RATE_LIMIT = 0`).
+
+---
+
+## ⚡ Quickstart
+
+### Prerequisites
+- Python 3.11+
+- `openenv-core>=0.2.3`
+
+### Installation
 
 ```bash
 git clone https://github.com/Yashrathore05/PullRequest-Arena.git
 cd PullRequest-Arena
+
+# Install the environment and its dependencies
 pip install -e .
 ```
 
-### Running the Environment (Programmatically)
+---
+
+## 💻 Programmatic Usage
+
+Interact with the environment natively in Python using the strictly typed Pydantic schema:
+
 ```python
-from client import PullRequestEnv
+from server.pullrequest_environment import PullRequestEnvironment
 from models import ReviewAction
 
-env = PullRequestEnv()
+# Initialize Local Environment
+env = PullRequestEnvironment()
 obs = env.reset(task_id="7")
 
 print(f"Reviewing PR: {obs.pr_title}")
+print(f"Diff Context:\n{obs.code_diff}")
 
-action = ReviewAction(type="request_changes", comment="Found an unparameterized SQL Injection in the diff.")
+# Agent formulates an action based on context
+action = ReviewAction(
+    type="request_changes", 
+    comment="SECURITY: Found an unparameterized SQL Injection in the authentication controller."
+)
+
+# Observe the step outcome and normalized reward [0.01 -> 0.99]
 next_obs = env.step(action)
-
 print(f"Reward received: {next_obs.reward}")
 ```
 
-### Running Baseline Inference
-We provide a baseline inference script using the OpenAI client spec to evaluate open-weights models (via HuggingFace) or direct OpenAI models. 
+---
+
+## 📊 Benchmarking & Inference
+
+We provide an automated analytical wrapper `benchmark.py` that hooks `inference.py` to evaluate your API-compatible LLMs. It executes across the entire task suite, aggressively grades responses deterministically, and formats a standardized ASCII leaderboard.
+
+**Execute Benchmark:**
 ```bash
-export API_BASE_URL="https://router.huggingface.co/v1"
-export MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
+# Provide a valid HuggingFace Token or OpenAI API Key
 export HF_TOKEN="your_hf_token"
 
-### Automated Benchmarking Leaderboard
-We provide an analytical wrapper `benchmark.py` that automatically runs inference and calculates robust detection statistics:
-```bash
+# Run the OpenEnv benchmark evaluation
 python benchmark.py --model Qwen/Qwen2.5-7B-Instruct
 ```
-This utility parses the strict OpenEnv evaluation logs to generate a leaderboard JSON (`results/benchmark_results.json`) featuring `average_reward`, `bug_detection_rate`, and `patch_success_rate`.
 
-## 🏗️ Architecture
-This environment flawlessly complies with the **OpenEnv multi-node specification**:
-- Standardized `pyproject.toml` definition.
-- Native `app.py` wrapper operating on `FastAPI` runtime.
-- Dedicated `Dockerfile` mapping to HuggingFace Spaces requirements.
-- Strictly deterministic, clipped grading `[0.01, 0.99]` algorithms enforcing proportional AI commentary evaluation.
+**Leaderboard Output:**
+```text
+==================================================
+🏆 PULLREQUEST ARENA LEADERBOARD
+==================================================
+Model                     | Avg Score  | Completion
+--------------------------------------------------
+Qwen/Qwen2.5-7B-Instruct  | 0.84       | 1.0       
+==================================================
+```
+*(Results are simultaneously appended to `results/benchmark_results.json`)*
+
+---
+
+## 🏗️ Architecture & Integration
+
+This environment is fully verified against the **OpenEnv multi-node specification**:
+- ✅ **`pyproject.toml`** standardized deployment structure (`project.scripts` securely mapped).
+- ✅ **FastAPI + Gradio** dual routing natively mounted in `server/app.py`.
+- ✅ **`openenv-core`** 0.2.3 compatible `GenericEnvClient` hooks.
+- ✅ **Strict deterministic grading heuristics** (`[0.01, 0.99]`) evaluating multi-modal actions.
+
+### Local Interactive UI
+You can spin up the full HuggingFace Spaces Gradio GUI locally:
+```bash
+python -m server.app
+```
+Navigate to `http://0.0.0.0:8000` to review the environment dynamically via the browser!
+
+---
+*Built with ❤️ for the Meta & Scaler OpenEnv Hackathon.*
