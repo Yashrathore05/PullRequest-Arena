@@ -56,26 +56,33 @@ def load_leaderboard():
 
 
 def create_ui():
-    theme = gr.themes.Soft(
-        primary_hue="indigo",
-        secondary_hue="blue",
-        neutral_hue="slate",
-        font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"]
+    theme = gr.themes.Monochrome(
+        font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
+        primary_hue="neutral",
+        secondary_hue="neutral",
+    ).set(
+        border_color_primary="#e5e5e5",
+        block_border_width="1px",
+        block_radius="8px",
+        button_primary_background_fill="*neutral_950",
+        button_primary_background_fill_hover="*neutral_800",
     )
 
     with gr.Blocks(theme=theme, title="PullRequest Arena — AI Code Review Benchmark") as app:
         env_state = gr.State()
 
-        # ── Hero Section ────────────────────────────────────────────────────
+        # ── Minimalist Stripe/Notion Style Hero ─────────────────────────────
         gr.Markdown("""
-# 🏟️ PullRequest Arena
-### An OpenEnv Benchmark for AI Code Review Agents
+# PullRequest Arena
+**An OpenEnv Benchmark for AI Code Review Agents**
 
 PullRequest Arena evaluates Large Language Models on their ability to act as **Senior Software Engineers** — detecting bugs, resisting deceptive PR descriptions, and generating correct patches across **19 adversarial tasks**.
 
-&nbsp;&nbsp;[![HuggingFace Space](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Space-green?style=flat-square)](https://huggingface.co/spaces/YashR05/pullrequest-arena)&nbsp;&nbsp;
-[![GitHub](https://img.shields.io/badge/GitHub-PullRequest--Arena-black?style=flat-square&logo=github)](https://github.com/Yashrathore05/PullRequest-Arena)&nbsp;&nbsp;
-[![OpenEnv](https://img.shields.io/badge/OpenEnv-Compatible-blue?style=flat-square)](https://github.com/openenv/openenv)
+[![HuggingFace Space](https://img.shields.io/badge/Live%20Space-Deployed-black?style=flat-square&logo=huggingface)](https://huggingface.co/spaces/YashR05/pullrequest-arena)
+[![GitHub](https://img.shields.io/badge/GitHub-PullRequest--Arena-black?style=flat-square&logo=github)](https://github.com/Yashrathore05/PullRequest-Arena)
+[![OpenEnv](https://img.shields.io/badge/OpenEnv-Compatible-black?style=flat-square)](https://github.com/openenv/openenv)
+
+---
         """)
 
         # ── Stats Row ───────────────────────────────────────────────────────
