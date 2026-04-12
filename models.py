@@ -12,15 +12,17 @@ PRObservation — The observation presented to the agent for each task.
 """
 
 from openenv.core.env_server.types import Action, Observation
-from pydantic import Field
+from pydantic import Field, BaseModel
 from typing import Optional
 
 
-class ReviewAction(Action):
-    """Structured review action returned by the AI code-review agent."""
-
-    type: str = Field(..., description="approve | request_changes | comment | suggest_fix")
-    comment: str = Field(..., description="Reviewer explanation of the issue")
+class ReviewAction(BaseModel):
+    """
+    Action format the agent must output to interact with the environment.
+    """
+    type: str = Field(description="Action type: approve, request_changes, comment, suggest_fix, submit_patch")
+    comment: str = Field(description="Review comment text")
+    patch: str | None = Field(default=None, description="The proposed code patch (only for submit_patch)")
 
 
 class PRObservation(Observation):
