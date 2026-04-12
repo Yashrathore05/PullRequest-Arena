@@ -1,10 +1,10 @@
 [
     {
         "model": "Qwen/Qwen2.5-7B-Instruct",
-        "timestamp": "2026-04-12T20:23:52.460283",
-        "average_reward": 0.67,
-        "bug_detection_rate": 0.74,
+        "timestamp": "2026-04-12T22:08:40.251490",
+        "average_reward": 0.71,
+        "bug_detection_rate": 0.79,
         "patch_success_rate": 0.0,
-        "task_completion_rate": 0.95
+        "task_completion_rate": 1.0
     }
 ]

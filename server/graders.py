@@ -104,7 +104,8 @@ def grade_task_9(action: ReviewAction, task: dict) -> float:
     raw = (0.6 * action_match) + (0.4 * keyword_quality)
     return _clip(raw)
 
-def route_grader(task_id: str, action: ReviewAction, task: dict) -> float:
+def route_grader(action: ReviewAction, task: dict) -> float:
+    task_id = str(task.get("id", ""))
     graders = {
         "1": grade_task_1,
         "2": grade_task_2,
@@ -115,8 +116,30 @@ def route_grader(task_id: str, action: ReviewAction, task: dict) -> float:
         "7": grade_task_7,
         "8": grade_task_8,
         "9": grade_task_9,
+        "10": grade_task_10,
+        "11": grade_task_11,
+        "12": grade_task_12,
+        "13": grade_task_13,
+        "14": grade_task_14,
+        "15": grade_task_15,
+        "16": grade_task_16,
+        "17": grade_task_17,
+        "18": grade_task_18,
+        "19": grade_task_19,
     }
-    grader_func = graders.get(str(task_id))
+    grader_func = graders.get(task_id)
     if grader_func:
         return grader_func(action, task)
     return _clip(_base_grade(action, task))
+
+# Individual functions for openenv.yaml registration
+def grade_task_10(a, t): return _clip(_base_grade(a, t))
+def grade_task_11(a, t): return _clip(_base_grade(a, t))
+def grade_task_12(a, t): return _clip(_base_grade(a, t))
+def grade_task_13(a, t): return _clip(_base_grade(a, t))
+def grade_task_14(a, t): return _clip(_base_grade(a, t))
+def grade_task_15(a, t): return _clip(_base_grade(a, t))
+def grade_task_16(a, t): return _clip(_base_grade(a, t))
+def grade_task_17(a, t): return _clip(_base_grade(a, t))
+def grade_task_18(a, t): return _clip(_base_grade(a, t))
+def grade_task_19(a, t): return _clip(_base_grade(a, t))

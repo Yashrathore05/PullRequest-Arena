@@ -40,3 +40,33 @@ tasks:
   - id: "9"
     description: "Hard: multi-file PR - bug in config.py, distraction in auth.py"
     grader: server.graders.grade_task_9
+  - id: "10"
+    description: "Adversarial: Boolean Logic Trap"
+    grader: server.graders.grade_task_10
+  - id: "11"
+    description: "Adversarial: Mutable Default Argument"
+    grader: server.graders.grade_task_11
+  - id: "12"
+    description: "Adversarial: Shadowed Variable"
+    grader: server.graders.grade_task_12
+  - id: "13"
+    description: "Adversarial: SQL Injection in Refactor"
+    grader: server.graders.grade_task_13
+  - id: "14"
+    description: "Hard: O(n) set to list Regression"
+    grader: server.graders.grade_task_14
+  - id: "15"
+    description: "Adversarial: Silent Exception Swallow"
+    grader: server.graders.grade_task_15
+  - id: "16"
+    description: "Adversarial: Auth Bypass logic"
+    grader: server.graders.grade_task_16
+  - id: "17"
+    description: "Expert: Threading race condition"
+    grader: server.graders.grade_task_17
+  - id: "18"
+    description: "Adversarial: Misleading comment trap"
+    grader: server.graders.grade_task_18
+  - id: "19"
+    description: "Medium: Off-by-one Edge Case"
+    grader: server.graders.grade_task_19
