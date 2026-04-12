@@ -1,3 +1,11 @@
+---
+title: PullRequest Arena
+emoji: 🏟️
+colorFrom: gray
+colorTo: purple
+sdk: docker
+pinned: false
+---
 # 🏟️ PullRequest Arena
 
 **PullRequest Arena** is an [OpenEnv](https://github.com/openenv/openenv) reinforcement learning environment that simulates a real-world GitHub code review flow. It is built to benchmark AI agents on their ability to act as senior software engineers by reviewing Pull Requests, analyzing complex diffs, and identifying critical programmatic vulnerabilities.
