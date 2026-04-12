@@ -66,10 +66,12 @@ class UnifiedEnv:
         action_obj = ReviewAction(**action_dict)
         if self.is_remote:
             res = self.client.step(action_obj)
-            return res.observation, res.reward or 0.0, res.done or False
+            raw_reward = res.reward if res.reward is not None else 0.5
+            return res.observation, max(0.01, min(0.99, float(raw_reward))), res.done or False
         else:
             obs = self.client.step(action_obj)
-            return obs, obs.reward or 0.0, obs.done or False
+            raw_reward = obs.reward if obs.reward is not None else 0.5
+            return obs, max(0.01, min(0.99, float(raw_reward))), obs.done or False
             
     def close(self):
         if self.is_remote:
@@ -265,10 +267,13 @@ def log_end(
 ) -> None:
     """Log the end of a task evaluation."""
     success_str = str(success).lower()
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    # Clamp each reward to (0, 1) for safety
+    safe_rewards = [max(0.01, min(0.99, r)) for r in rewards]
+    score = safe_rewards[-1] if safe_rewards else 0.01
+    rewards_str = ",".join(f"{r:.2f}" for r in safe_rewards)
     print(
         f"[END] success={success_str} steps={steps} "
-        f"rewards={rewards_str}"
+        f"score={score:.2f} rewards={rewards_str}"
     )
 
 
