@@ -6,10 +6,10 @@ from openenv.core.env_server.interfaces import Environment
 
 try:
     from ..models import ReviewAction, PRObservation
-    from .graders import route_grader
+    from .graders import route_grader, _clip
 except ImportError:
     from models import ReviewAction, PRObservation
-    from server.graders import route_grader
+    from server.graders import route_grader, _clip
 
 class PullRequestEnvironment(Environment):
     def __init__(self):
@@ -63,7 +63,7 @@ class PullRequestEnvironment(Environment):
         )
 
     def step(self, action: ReviewAction):
-        reward = route_grader(action, self.current_task)
+        reward = _clip(route_grader(action, self.current_task))
         self.step_count += 1
         
         feedback = f"Review action '{action.type}' submitted. Evaluated reward: {reward:.2f}."

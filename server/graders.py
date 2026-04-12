@@ -4,8 +4,14 @@ except ImportError:
     from models import ReviewAction
 
 def _clip(score: float) -> float:
-    # Strictly bind to (0, 1) to satisfy validator
-    return float(max(0.01, min(0.99, score)))
+    """Strictly bind score to the open interval (0, 1).
+    The OpenEnv Phase-2 validator rejects 0.0 and 1.0 exactly,
+    so we clamp to [0.01, 0.99]."""
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        s = 0.5
+    return max(0.01, min(0.99, s))
 
 def _get_action_match(action: ReviewAction, expected: str) -> float:
     if action.type == "approve":
@@ -20,7 +26,7 @@ def _get_action_match(action: ReviewAction, expected: str) -> float:
     return 0.5
 
 def _get_keyword_quality(action: ReviewAction, keywords: list) -> float:
-    comment = action.comment.lower()
+    comment = (action.comment or "").lower()
     hits = sum(1 for kw in keywords if kw.lower() in comment)
     if hits >= 2:
         return 1.0
@@ -43,7 +49,7 @@ def _base_grade(action: ReviewAction, task: dict) -> float:
             patch_score = 0.5
             
     raw = (0.5 * action_match) + (0.3 * keyword_quality) + (0.2 * patch_score)
-    return raw
+    return _clip(raw)
 
 def grade_task_1(action: ReviewAction, task: dict) -> float:
     return _clip(_base_grade(action, task))
@@ -65,9 +71,9 @@ def grade_task_6(action: ReviewAction, task: dict) -> float:
 
 def grade_task_7(action: ReviewAction, task: dict) -> float:
     if action.type == "approve":
-        return 0.01
+        return _clip(0.01)
         
-    comment = action.comment.lower()
+    comment = (action.comment or "").lower()
     action_match = _get_action_match(action, task.get("expected_action", "request_changes"))
     
     if "sql injection" in comment and ("description" in comment or "misleading" in comment):
@@ -79,7 +85,7 @@ def grade_task_7(action: ReviewAction, task: dict) -> float:
     return _clip(raw)
 
 def grade_task_8(action: ReviewAction, task: dict) -> float:
-    comment = action.comment.lower()
+    comment = (action.comment or "").lower()
     action_match = _get_action_match(action, task.get("expected_action", "request_changes"))
     
     if ("logging" in comment or "log" in comment) and "card" in comment:
@@ -91,7 +97,7 @@ def grade_task_8(action: ReviewAction, task: dict) -> float:
     return _clip(raw)
 
 def grade_task_9(action: ReviewAction, task: dict) -> float:
-    comment = action.comment.lower()
+    comment = (action.comment or "").lower()
     action_match = _get_action_match(action, task.get("expected_action", "request_changes"))
     
     keyword_quality = _get_keyword_quality(action, task.get("keywords", []))
@@ -103,6 +109,18 @@ def grade_task_9(action: ReviewAction, task: dict) -> float:
         
     raw = (0.6 * action_match) + (0.4 * keyword_quality)
     return _clip(raw)
+
+# Individual functions for openenv.yaml registration
+def grade_task_10(a, t): return _clip(_base_grade(a, t))
+def grade_task_11(a, t): return _clip(_base_grade(a, t))
+def grade_task_12(a, t): return _clip(_base_grade(a, t))
+def grade_task_13(a, t): return _clip(_base_grade(a, t))
+def grade_task_14(a, t): return _clip(_base_grade(a, t))
+def grade_task_15(a, t): return _clip(_base_grade(a, t))
+def grade_task_16(a, t): return _clip(_base_grade(a, t))
+def grade_task_17(a, t): return _clip(_base_grade(a, t))
+def grade_task_18(a, t): return _clip(_base_grade(a, t))
+def grade_task_19(a, t): return _clip(_base_grade(a, t))
 
 def route_grader(action: ReviewAction, task: dict) -> float:
     task_id = str(task.get("id", ""))
@@ -129,17 +147,5 @@ def route_grader(action: ReviewAction, task: dict) -> float:
     }
     grader_func = graders.get(task_id)
     if grader_func:
-        return grader_func(action, task)
+        return _clip(grader_func(action, task))
     return _clip(_base_grade(action, task))
-
-# Individual functions for openenv.yaml registration
-def grade_task_10(a, t): return _clip(_base_grade(a, t))
-def grade_task_11(a, t): return _clip(_base_grade(a, t))
-def grade_task_12(a, t): return _clip(_base_grade(a, t))
-def grade_task_13(a, t): return _clip(_base_grade(a, t))
-def grade_task_14(a, t): return _clip(_base_grade(a, t))
-def grade_task_15(a, t): return _clip(_base_grade(a, t))
-def grade_task_16(a, t): return _clip(_base_grade(a, t))
-def grade_task_17(a, t): return _clip(_base_grade(a, t))
-def grade_task_18(a, t): return _clip(_base_grade(a, t))
-def grade_task_19(a, t): return _clip(_base_grade(a, t))
