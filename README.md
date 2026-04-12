@@ -54,8 +54,12 @@ export API_BASE_URL="https://router.huggingface.co/v1"
 export MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
 export HF_TOKEN="your_hf_token"
 
-python inference.py
+### Automated Benchmarking Leaderboard
+We provide an analytical wrapper `benchmark.py` that automatically runs inference and calculates robust detection statistics:
+```bash
+python benchmark.py --model Qwen/Qwen2.5-7B-Instruct
 ```
+This utility parses the strict OpenEnv evaluation logs to generate a leaderboard JSON (`results/benchmark_results.json`) featuring `average_reward`, `bug_detection_rate`, and `patch_success_rate`.
 
 ## 🏗️ Architecture
 This environment flawlessly complies with the **OpenEnv multi-node specification**:
