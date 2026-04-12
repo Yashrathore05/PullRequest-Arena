@@ -31,8 +31,26 @@ class UnifiedEnv:
         
         if self.is_remote:
             from client import PullRequestEnv
+            import time
+            import sys
+            
             self.client = PullRequestEnv(base_url=self.env_url).sync()
-            self.client.__enter__()
+            
+            # Wait for server to boot (up to 60s)
+            connected = False
+            last_err = None
+            for i in range(15):
+                try:
+                    self.client.__enter__()
+                    connected = True
+                    break
+                except Exception as e:
+                    last_err = e
+                    time.sleep(4)
+                    
+            if not connected:
+                print(f"[FATAL] Could not connect to remote env {self.env_url}: {last_err}")
+                sys.exit(1)
         else:
             from server.pullrequest_environment import PullRequestEnvironment
             self.client = PullRequestEnvironment()
@@ -371,11 +389,14 @@ def run_inference() -> None:
 
 
 def main():
+    import sys
     try:
         run_inference()
     except Exception as e:
         print(f"[ERROR] inference failed: {e}")
-
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
