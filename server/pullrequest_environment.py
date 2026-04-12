@@ -63,7 +63,7 @@ class PullRequestEnvironment(Environment):
         )
 
     def step(self, action: ReviewAction):
-        reward = route_grader(str(self.current_task["id"]), action, self.current_task)
+        reward = route_grader(action, self.current_task)
         self.step_count += 1
         
         feedback = f"Review action '{action.type}' submitted. Evaluated reward: {reward:.2f}."
