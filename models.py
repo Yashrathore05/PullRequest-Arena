@@ -44,4 +44,4 @@ class PRObservation(Observation):
     difficulty: str = Field(default="easy")
     feedback: str = Field(default="")
     done: bool = Field(default=False)
-    reward: float = Field(default=0.0)
+    reward: float = Field(default=0.01)

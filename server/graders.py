@@ -4,7 +4,8 @@ except ImportError:
     from models import ReviewAction
 
 def _clip(score: float) -> float:
-    return max(0.01, min(0.99, score))
+    # Strictly bind to (0, 1) to satisfy validator
+    return float(max(0.01, min(0.99, score)))
 
 def _get_action_match(action: ReviewAction, expected: str) -> float:
     if action.type == "approve":

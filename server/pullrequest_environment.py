@@ -59,7 +59,7 @@ class PullRequestEnvironment(Environment):
             difficulty=self.current_task.get("difficulty", "easy"),
             feedback="",
             done=False,
-            reward=0.0
+            reward=0.01
         )
 
     def step(self, action: ReviewAction):

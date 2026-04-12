@@ -346,11 +346,11 @@ def run_inference() -> None:
         except Exception as e:
             step_num += 1
             error_msg = str(e)
-            episode_rewards.append(0.0)
+            episode_rewards.append(0.01)
             log_step(
                 step=step_num,
                 action={"type": "error", "comment": error_msg},
-                reward=0.0,
+                reward=0.01,
                 done=True,
                 error=error_msg,
             )
@@ -371,9 +371,7 @@ def run_inference() -> None:
 
     # --- Aggregate results ---
     elapsed = time.time() - start_time
-    total_score = (
-        sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
-    )
+    total_score = sum(all_rewards) / len(all_rewards) if all_rewards else 0.01
     tasks_passed = sum(1 for s in all_success if s)
 
     print("=" * 60)
