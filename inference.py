@@ -301,7 +301,7 @@ def run_inference() -> None:
 
     # --- Initialize environment ---
     env = UnifiedEnv()
-    task_ids = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    task_ids = [str(i) for i in range(1, 20)]
     total_tasks = len(task_ids)
 
     print(f"PullRequest Arena — Baseline Inference")

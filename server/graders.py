@@ -11,6 +11,8 @@ def _get_action_match(action: ReviewAction, expected: str) -> float:
         return 0.0
     if action.type == expected:
         return 1.0
+    if action.type == "submit_patch" and expected in ["request_changes", "suggest_fix", "submit_patch"]:
+        return 1.0
     if action.type == "comment":
         return 0.5
     # If they use suggest_fix instead of request_changes or vice versa, still give partial/full credit
@@ -28,7 +30,18 @@ def _get_keyword_quality(action: ReviewAction, keywords: list) -> float:
 def _base_grade(action: ReviewAction, task: dict) -> float:
     action_match = _get_action_match(action, task.get("expected_action", "request_changes"))
     keyword_quality = _get_keyword_quality(action, task.get("keywords", []))
-    raw = (0.6 * action_match) + (0.4 * keyword_quality)
+    
+    # If the agent attempts a patch, award bonus points if the patch is decent
+    patch_score = 0.0
+    if action.type == "submit_patch" and action.patch:
+        patch = action.patch.strip()
+        expected_patch = task.get("expected_patch", "")
+        if expected_patch and expected_patch in patch:
+            patch_score = 1.0
+        elif len(patch) > 5:
+            patch_score = 0.5
+            
+    raw = (0.5 * action_match) + (0.3 * keyword_quality) + (0.2 * patch_score)
     return raw
 
 def grade_task_1(action: ReviewAction, task: dict) -> float:
@@ -103,6 +116,6 @@ def route_grader(task_id: str, action: ReviewAction, task: dict) -> float:
         "9": grade_task_9,
     }
     grader_func = graders.get(str(task_id))
-    if not grader_func:
-        return 0.01
-    return grader_func(action, task)
+    if grader_func:
+        return grader_func(action, task)
+    return _clip(_base_grade(action, task))
