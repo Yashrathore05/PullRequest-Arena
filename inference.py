@@ -384,7 +384,7 @@ def run_inference() -> None:
     print(f"  Tasks:      {tasks_passed}/{total_tasks} completed")
     print(f"  Avg Score:  {total_score:.2f}")
     print(f"  Total Time: {elapsed:.1f}s")
-    print(f"  All Rewards: {','.join(f'{r:.1f}' for r in all_rewards)}")
+    print(f"  All Rewards: {','.join(f'{r:.2f}' for r in all_rewards)}")
     print("=" * 60)
 
 
