@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=openenv-base:latest
+ARG BASE_IMAGE=python:3.11-slim
 FROM ${BASE_IMAGE}
 
 WORKDIR /app/env
