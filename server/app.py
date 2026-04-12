@@ -21,3 +21,10 @@ env_app = create_app(
 # Render production UI overlay
 ui = create_ui()
 app = gr.mount_gradio_app(env_app, ui, path="/")
+
+def main():
+    import uvicorn
+    uvicorn.run("server.app:app", host="0.0.0.0", port=8000)
+
+if __name__ == "__main__":
+    main()

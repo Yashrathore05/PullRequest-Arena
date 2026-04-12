@@ -17,3 +17,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["server", "client.py", "models.py", "__init__.py"]
+
+[project.scripts]
+openenv-server = "server.app:main"
