@@ -1,87 +1,42 @@
-name: pullrequest-arena
-description: >
-  An OpenEnv-compatible reinforcement learning environment that simulates
-  a real-world GitHub pull request code review workflow. An AI agent acts
-  as a code reviewer, analyzing code diffs, identifying bugs, and taking
-  review actions such as approving, requesting changes, commenting, or
-  suggesting fixes. Rewards are assigned based on the accuracy and quality
-  of the agent's code review decisions.
-version: "1.0.0"
-entrypoint: env.py
-
-observation_schema:
-  type: object
-  required:
-    - pr_title
-    - pr_description
-    - files_changed
-    - code_diff
-    - language
-    - tests_passed
-  properties:
-    pr_title:
-      type: string
-      description: Title of the pull request under review.
-    pr_description:
-      type: string
-      description: Description explaining the purpose and changes in the pull request.
-    files_changed:
-      type: array
-      items:
-        type: string
-      description: List of filenames modified in the pull request.
-    code_diff:
-      type: string
-      description: The code diff that the agent must review for issues.
-    language:
-      type: string
-      description: Programming language of the code in the diff.
-      enum:
-        - python
-        - javascript
-        - typescript
-        - java
-        - go
-        - rust
-    tests_passed:
-      type: boolean
-      description: Whether the existing test suite passes with the proposed changes.
-    repository_context:
-      type: string
-      description: Additional context about the repository and the module being changed.
-
-action_schema:
-  type: object
-  required:
-    - type
-    - comment
-  properties:
-    type:
-      type: string
-      description: The review action the agent decides to take.
-      enum:
-        - approve
-        - request_changes
-        - comment
-        - suggest_fix
-    comment:
-      type: string
-      description: >
-        The agent's review comment explaining the identified issue,
-        the reasoning behind the chosen action, or the suggested fix.
-
-reward_range:
-  min: 0.0
-  max: 1.0
-  description: >
-    Rewards are normalized between 0.0 and 1.0. A score of 1.0 indicates
-    a correct action type with relevant review commentary. A score of 0.0
-    indicates a completely incorrect review action.
-
+spec_version: 1
+name: pullrequest_arena
+version: 1.0.0
+description: "OpenEnv environment for AI code review. Agent reviews GitHub PRs, identifies bugs across deceptive descriptions and CI logs, earns rewards for review quality. 9 tasks: easy/medium/hard."
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+tags:
+  - openenv
+  - code-review
+  - pull-request
+  - developer-tools
+  - real-world
 tasks:
-  min_count: 3
-  difficulties:
-    - easy
-    - medium
-    - hard
-  source: tasks.json
+  - id: "1"
+    description: "Easy: assignment vs comparison bug"
+    grader: server.graders.grade_task_1
+  - id: "2"
+    description: "Medium: truthy string RBAC bug"
+    grader: server.graders.grade_task_2
+  - id: "3"
+    description: "Hard: range(len) antipattern"
+    grader: server.graders.grade_task_3
+  - id: "4"
+    description: "Easy: == None vs is None"
+    grader: server.graders.grade_task_4
+  - id: "5"
+    description: "Medium: MD5 password hashing"
+    grader: server.graders.grade_task_5
+  - id: "6"
+    description: "Hard: resource leak + SQL injection"
+    grader: server.graders.grade_task_6
+  - id: "7"
+    description: "Hard: deceptive PR - description says typo, code has SQL injection"
+    grader: server.graders.grade_task_7
+  - id: "8"
+    description: "Hard: red herring - 3 fake suspicious lines, 1 real bug hidden"
+    grader: server.graders.grade_task_8
+  - id: "9"
+    description: "Hard: multi-file PR - bug in config.py, distraction in auth.py"
+    grader: server.graders.grade_task_9

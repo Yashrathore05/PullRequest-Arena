@@ -1,28 +1,16 @@
-# PullRequest Arena — Dockerfile
-# Containerized OpenEnv environment for HuggingFace Spaces deployment
+ARG BASE_IMAGE=openenv-base:latest
+FROM ${BASE_IMAGE}
 
-FROM python:3.11-slim
+WORKDIR /app/env
 
-# Prevent Python from writing .pyc files and enable unbuffered output
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
-
-WORKDIR /app
-
-# Install dependencies first (layer caching)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy project files
+COPY pyproject.toml .
 COPY . .
 
-# HuggingFace Spaces expects port 7860
-EXPOSE 7860
+RUN pip install --no-cache-dir -e .
 
-# Health check to verify the server is responding
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7860/health')" || exit 1
+ENV PYTHONPATH="/app/env:$PYTHONPATH"
 
-# Start the Flask server
-CMD ["python", "server/app.py"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:7860/health || exit 1
+
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]

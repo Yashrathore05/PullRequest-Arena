@@ -1,86 +1,210 @@
 [
   {
-    "id": 1,
+    "id": "1",
     "difficulty": "easy",
     "pr_title": "Fix login validation",
-    "pr_description": "Updated the login function to check user credentials before granting access.",
-    "files_changed": ["auth.py"],
+    "pr_description": "Updated login function to check credentials",
+    "files_changed": [
+      "auth.py"
+    ],
     "code_diff": "def login(user, password):\n    if password = user.password:\n        return True\n    return False",
     "language": "python",
     "tests_passed": false,
+    "ci_logs": "FAILED: SyntaxError: invalid syntax (auth.py, line 2)",
     "repository_context": "Flask web application with user authentication module. The auth.py file handles login, logout, and session management.",
     "expected_action": "request_changes",
-    "expected_keywords": ["==", "comparison", "assignment", "equality"],
-    "bug_description": "Uses assignment operator (=) instead of comparison operator (==) in the if condition."
+    "keywords": [
+      "==",
+      "comparison",
+      "assignment",
+      "syntax",
+      "operator"
+    ]
   },
   {
-    "id": 2,
+    "id": "2",
     "difficulty": "medium",
     "pr_title": "Add role-based access control",
-    "pr_description": "Implemented role checking to restrict admin panel access to authorized users only.",
-    "files_changed": ["permissions.py"],
-    "code_diff": "def check_access(user):\n    if user.role == \"admin\" or \"moderator\":\n        grant_access(user)\n    else:\n        deny_access(user)",
+    "pr_description": "Added RBAC to restrict endpoint access by user role",
+    "files_changed": [
+      "middleware.py"
+    ],
+    "code_diff": "def check_role(role):\n    if role:\n        return True\n    return False",
     "language": "python",
     "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed",
     "repository_context": "Django application with role-based permissions system. The permissions.py module controls access to admin and moderator features.",
     "expected_action": "request_changes",
-    "expected_keywords": ["or", "truthy", "always true", "boolean", "user.role"],
-    "bug_description": "The condition 'user.role == \"admin\" or \"moderator\"' always evaluates to True because 'or \"moderator\"' is a non-empty string which is truthy. Should be 'user.role == \"admin\" or user.role == \"moderator\"' or use 'user.role in (\"admin\", \"moderator\")'."
+    "keywords": [
+      "truthy",
+      "string",
+      "always true",
+      "boolean",
+      "empty",
+      "role"
+    ]
   },
   {
-    "id": 3,
+    "id": "3",
     "difficulty": "hard",
     "pr_title": "Refactor data processing loop",
-    "pr_description": "Optimized the data processing pipeline to handle large datasets more efficiently.",
-    "files_changed": ["processor.py"],
-    "code_diff": "def process_items(items):\n    results = []\n    for i in range(len(items)):\n        result = transform(items[i])\n        results.append(result)\n    return results",
+    "pr_description": "Cleaned up the data processing module",
+    "files_changed": [
+      "processor.py"
+    ],
+    "code_diff": "for i in range(len(items)):\n    process(items[i])",
     "language": "python",
     "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed",
     "repository_context": "Data processing service that transforms incoming records. The processor.py module handles batch transformations on datasets ranging from hundreds to millions of records.",
     "expected_action": "suggest_fix",
-    "expected_keywords": ["for item in", "enumerate", "list comprehension", "pythonic", "range(len"],
-    "bug_description": "Non-Pythonic loop pattern using range(len(items)) and index access. Should use direct iteration 'for item in items' or a list comprehension '[transform(item) for item in items]'."
+    "keywords": [
+      "range",
+      "len",
+      "pythonic",
+      "iterate",
+      "enumerate",
+      "direct"
+    ]
   },
   {
-    "id": 4,
+    "id": "4",
     "difficulty": "easy",
     "pr_title": "Add null check for user profile",
-    "pr_description": "Added validation to handle cases where user profile data might be missing.",
-    "files_changed": ["profile.py"],
-    "code_diff": "def get_display_name(user):\n    name = user.profile.name\n    if name == None:\n        return \"Anonymous\"\n    return name",
+    "pr_description": "Added null check before accessing user profile fields",
+    "files_changed": [
+      "profile.py"
+    ],
+    "code_diff": "if user.profile == None:\n    return default_profile()",
     "language": "python",
     "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed",
     "repository_context": "User profile service in a social media application. The profile.py module renders user display information across the platform.",
     "expected_action": "suggest_fix",
-    "expected_keywords": ["is None", "is not", "identity", "PEP 8", "singleton"],
-    "bug_description": "Uses '== None' instead of 'is None'. PEP 8 recommends using identity checks (is/is not) for singleton comparisons like None."
+    "keywords": [
+      "is none",
+      "identity",
+      "equality",
+      "== none",
+      "__eq__",
+      "none check"
+    ]
   },
   {
-    "id": 5,
+    "id": "5",
     "difficulty": "medium",
     "pr_title": "Implement secure password hashing",
-    "pr_description": "Added password hashing before storing user credentials in the database.",
-    "files_changed": ["security.py"],
-    "code_diff": "import hashlib\n\ndef hash_password(password):\n    return hashlib.md5(password.encode()).hexdigest()\n\ndef verify_password(password, hashed):\n    return hash_password(password) == hashed",
+    "pr_description": "Added password hashing to user registration flow",
+    "files_changed": [
+      "auth.py"
+    ],
+    "code_diff": "import hashlib\nhashed = hashlib.md5(password.encode()).hexdigest()",
     "language": "python",
     "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed",
     "repository_context": "Authentication microservice handling user registration and login. The security.py module manages credential storage and verification.",
     "expected_action": "request_changes",
-    "expected_keywords": ["md5", "insecure", "bcrypt", "sha256", "salt", "weak", "hash"],
-    "bug_description": "Uses MD5 for password hashing which is cryptographically broken and unsuitable for password storage. Should use bcrypt, scrypt, or argon2 with proper salting."
+    "keywords": [
+      "md5",
+      "insecure",
+      "bcrypt",
+      "sha256",
+      "password",
+      "cryptographic"
+    ]
   },
   {
-    "id": 6,
+    "id": "6",
     "difficulty": "hard",
     "pr_title": "Add database connection handler",
-    "pr_description": "Created a utility for managing database connections with connection pooling.",
-    "files_changed": ["database.py"],
-    "code_diff": "import sqlite3\n\ndef get_data(query):\n    conn = sqlite3.connect('app.db')\n    cursor = conn.cursor()\n    result = cursor.execute(query)\n    data = result.fetchall()\n    return data",
+    "pr_description": "Added connection pooling for database queries",
+    "files_changed": [
+      "db.py"
+    ],
+    "code_diff": "def get_user(user_input):\n    conn = db.connect()\n    result = conn.execute(f'SELECT * FROM users WHERE id = {user_input}')\n    return result",
     "language": "python",
     "tests_passed": true,
+    "ci_logs": "WARNING: No connection close detected. WARNING: Unparameterized query detected.",
     "repository_context": "Backend API service using SQLite for data persistence. The database.py module provides data access utilities used across multiple endpoints.",
     "expected_action": "request_changes",
-    "expected_keywords": ["close", "context manager", "with", "resource leak", "connection", "sql injection", "parameterized"],
-    "bug_description": "Multiple issues: (1) Database connection is never closed, causing resource leaks. Should use a context manager ('with' statement). (2) Direct string query execution is vulnerable to SQL injection. Should use parameterized queries."
+    "keywords": [
+      "sql injection",
+      "resource leak",
+      "close",
+      "f-string",
+      "parameterized",
+      "connection"
+    ]
+  },
+  {
+    "id": "7",
+    "difficulty": "hard",
+    "pr_title": "Fix minor typo in login message",
+    "pr_description": "Just corrected a spelling mistake in the error message string. No logic changes.",
+    "files_changed": [
+      "auth.py"
+    ],
+    "code_diff": "def authenticate(user_input):\n    # fixed typo in message\n    query = f\"SELECT * FROM users WHERE username = '{user_input}'\"\n    return db.execute(query)",
+    "language": "python",
+    "tests_passed": true,
+    "ci_logs": "WARNING: Unparameterized query with user input detected on line 3",
+    "repository_context": "Production authentication service handling 10k daily logins",
+    "expected_action": "request_changes",
+    "keywords": [
+      "sql injection",
+      "parameterized",
+      "f-string",
+      "user input",
+      "misleading",
+      "description"
+    ]
+  },
+  {
+    "id": "8",
+    "difficulty": "hard",
+    "pr_title": "Optimize payment processing pipeline",
+    "pr_description": "Performance improvements to payment service. Added logging and refactored validation.",
+    "files_changed": [
+      "payment.py"
+    ],
+    "code_diff": "def process_payment(amount, card):\n    logging.info(f'Processing: {amount}')  # added logging\n    if amount > 0:  # explicit check\n        pass  # placeholder\n    card_data = card['number']  # direct access\n    charge(card_data, amount)\n    logging.info(f'Card: {card[\"number\"]}')  # BUG: logs full card number to plaintext logs",
+    "language": "python",
+    "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed. INFO: Payment logging enabled.",
+    "repository_context": "PCI-DSS compliant payment processor. Card data must never appear in logs.",
+    "expected_action": "request_changes",
+    "keywords": [
+      "card number",
+      "log",
+      "pci",
+      "sensitive",
+      "plaintext",
+      "exposed"
+    ]
+  },
+  {
+    "id": "9",
+    "difficulty": "hard",
+    "pr_title": "Add rate limiting to API endpoints",
+    "pr_description": "Implemented rate limiting across all public API endpoints for security",
+    "files_changed": [
+      "api.py",
+      "middleware.py",
+      "config.py"
+    ],
+    "code_diff": "# api.py\n@app.route('/api/data')\n@rate_limit\ndef get_data():\n    return data\n\n# middleware.py\ndef rate_limit(f):\n    # suspicious but actually fine\n    requests = cache.get(ip, [])\n    return f\n\n# config.py\nRATE_LIMIT = 0  # BUG: rate limit set to 0 means unlimited requests - defeats the purpose",
+    "language": "python",
+    "tests_passed": true,
+    "ci_logs": "PASSED: all tests passed. Rate limiting middleware registered.",
+    "repository_context": "Public API with history of DDoS attacks. Rate limiting is a security requirement.",
+    "expected_action": "request_changes",
+    "keywords": [
+      "rate limit",
+      "zero",
+      "unlimited",
+      "config",
+      "disabled",
+      "ineffective"
+    ]
   }
 ]

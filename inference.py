@@ -22,7 +22,7 @@ import time
 
 from openai import OpenAI
 
-from env import PullRequestArenaEnv
+from client import PullRequestEnv
 
 
 # ---------------------------------------------------------------------------
@@ -242,8 +242,9 @@ def run_inference() -> None:
     )
 
     # --- Initialize environment ---
-    env = PullRequestArenaEnv()
-    total_tasks = env.num_tasks
+    env = PullRequestEnv()
+    task_ids = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    total_tasks = len(task_ids)
 
     print(f"PullRequest Arena — Baseline Inference")
     print(f"Model: {model_name}")
@@ -256,9 +257,10 @@ def run_inference() -> None:
     all_success: list[bool] = []
     start_time = time.time()
 
-    for task_idx in range(total_tasks):
-        observation = env.reset(task_index=task_idx)
-        task_id = env.state()["current_task_id"]
+    for task_id in task_ids:
+        observation_obj = env.reset(task_id=task_id)
+        # convert OpenEnv observation model to dict
+        observation = observation_obj.model_dump() if hasattr(observation_obj, "model_dump") else dict(observation_obj)
 
         log_start(task_id=task_id, env_name=ENV_NAME, model=model_name)
 

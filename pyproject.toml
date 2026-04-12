@@ -1,18 +1,15 @@
 [project]
 name = "pullrequest-arena"
 version = "1.0.0"
-description = "OpenEnv environment for AI code review training and evaluation"
-requires-python = ">=3.10"
-
+requires-python = ">=3.11"
 dependencies = [
-    "flask",
-    "openenv-core>=0.2.0"
+    "openenv-core>=0.1.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
 ]
 
-[project.scripts]
-openenv-server = "server.app:main"
-server = "server.app:main"
-
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,12 +1,15 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from ..models import ReviewAction, PRObservation
+    from .pullrequest_environment import PullRequestEnvironment
+except ImportError:
+    from models import ReviewAction, PRObservation
+    from server.pullrequest_environment import PullRequestEnvironment
 
-from env import create_app
-app = create_app()
+from openenv.core.env_server import create_app
 
-def main():
-    app.run(host="0.0.0.0", port=7860)
-
-if __name__ == "__main__":
-    main()
+app = create_app(
+    PullRequestEnvironment,
+    ReviewAction,
+    PRObservation,
+    env_name="pullrequest_arena"
+)
